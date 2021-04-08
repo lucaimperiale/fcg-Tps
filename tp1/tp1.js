@@ -1,17 +1,25 @@
+const floydSteinberg = "floyd-steinberg";
+const jarvisJudice = "jarvis-judice";
+
 // Cargamos una imagen 
 function handleFiles(e)
 {
+    handleFile(e, floydSteinberg, floydSteinbergDiffusion);
+    handleFile(e, jarvisJudice, jarvisJudiceDiffusion);
+}
+
+const handleFile = (e, algorithmName, diffusionFn) => {
     // abrir el archivo
     console.log("> Cargando imagen...");
     var URL      = window.webkitURL || window.URL;
     // canvas de entrada, de dithering y de diferencias
-    var canvasinput  = document.getElementById('canvasinput');
+    var canvasinput  = document.getElementById(`${algorithmName}-canvasinput`);
     var contextinput  = canvasinput.getContext('2d');
     var url      = URL.createObjectURL(e.target.files[0]);
     var img      = new Image();
 
-    // limpiamos el canvas
-    contextinput.clearRect(0, 0, canvasinput.width, canvasinput.height);  
+    // limpiamos los canvas
+    contextinput.clearRect(0, 0, canvasinput.width, canvasinput.height);
 
     // dibujamos en el canvas (ojo que es asincrónica!)
     img.onload = function() 
@@ -23,20 +31,25 @@ function handleFiles(e)
         console.log("> ... imagen cargada!");
 
         // computamos dither y diferencia
-        recomputeImages();
+        compute(algorithmName, diffusionFn);
     }
 
     img.src = url;
 }
 
 // Computa las imágenes derivadas (dither y substraction)
-function recomputeImages() 
-{
-    console.log("> Computando dithering y diferencias...");
+const recomputeImages = () => {
+    compute(floydSteinberg, floydSteinbergDiffusion);
+    compute(jarvisJudice, jarvisJudiceDiffusion);
+}
+
+const compute = (algorithmName, diffusionFn) => {
+    console.log(`> Computando dithering y diferencias para ${algorithmName}...`);
     // obtenemos los canvas
-    var canvasinput   = document.getElementById('canvasinput');
-    var canvasresult  = document.getElementById('canvasresult');
-    var canvasdiff    = document.getElementById('canvasdiff');
+    var canvasinput   = document.getElementById(`${algorithmName}-canvasinput`);
+    var canvasresult  = document.getElementById(`${algorithmName}-canvasresult`);
+    var canvasdiff    = document.getElementById(`${algorithmName}-canvasdiff`);
+
     var contextinput  = canvasinput.getContext('2d');
     var contextresult = canvasresult.getContext('2d');
     var contextdiff   = canvasdiff.getContext('2d'); 
@@ -44,12 +57,12 @@ function recomputeImages()
     // obtener niveles 
     var levels = document.getElementById('inputlevels').value;   
 
-    // limpiamos el canvas
+    // limpiamos los canvas
     contextresult.clearRect(0, 0, canvasresult.width, canvasresult.height);
     contextdiff.clearRect(0, 0, canvasdiff.width, canvasdiff.height);  
 
     // filtramos la imagen
-    // creamos la imagen nueva (slice copia los datos)
+    // creamos la imagen nueva
     var dithering = new ImageData(
         contextinput.getImageData(0, 0, canvasinput.width, canvasinput.height).data, 
         canvasinput.width, 
@@ -57,7 +70,7 @@ function recomputeImages()
     );
     
     // filtrado
-    dither(dithering, levels);
+    dither(diffusionFn, dithering, levels);
 
     // mostramos el resultado despuás del filtrado
     canvasresult.width  = canvasinput.width;
@@ -66,7 +79,7 @@ function recomputeImages()
     canvasresult.toDataURL('image/png');
 
     // diferencias
-    // creamos la imagen nueva (slice copia los datos)
+    // creamos la imagen nueva
     var subsimg = new ImageData(
         contextinput.getImageData(0, 0, canvasinput.width, canvasinput.height).data, 
         canvasinput.width, 
@@ -74,27 +87,26 @@ function recomputeImages()
     );
 
     // filtrado
-    substraction(subsimg, dithering, subsimg);
+    substraction(dithering, subsimg, subsimg);
 
     // mostramos el resultado despuás del filtrado
     canvasdiff.width  = canvasinput.width;
     canvasdiff.height = canvasinput.height;
-    contextdiff.putImageData( subsimg, 0, 0 );
+    contextdiff.putImageData(subsimg, 0, 0);
     canvasdiff.toDataURL('image/png');
 
-
-    console.log("> ... finalizado!");
+    console.log(`> ... finalizado ${algorithmName}!`);
 }
 
 // Inicialización del documento
 window.onload = function() 
 {
     // asocio inputfile a la función addImage
-    var inputfile   = document.getElementById('inputfile');
+    var inputfile = document.getElementById('inputfile');
     inputfile.addEventListener('change', handleFiles);
 
     // asocio inputlevels a la función recomputeImages()
-    var inputlevels   = document.getElementById('inputlevels');
+    var inputlevels = document.getElementById('inputlevels');
     inputlevels.addEventListener('change', recomputeImages);
 
     console.log("> HTML listo!");
