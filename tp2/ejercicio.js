@@ -11,7 +11,23 @@
 // Las rotaciones vienen expresadas en grados. 
 function BuildTransform( positionX, positionY, rotation, scale )
 {
-	return Array(1,0,0,0,1,0,0,0,1);
+	const mt = translationM(positionX, positionY);
+	const mr = rotationM(rotation);
+	const ms = scaleM(scale);
+
+	return ComposeTransforms(ms, ComposeTransforms(mr, mt));
+}
+
+const scaleM = s => Array(s, 0, 0, 0, s, 0, 0, 0, 1);
+
+const translationM = (x, y) => Array(1, 0, 0, 0, 1, 0, x, y, 1);
+
+const rotationM = degrees => {
+	const rad = Math.PI * Math.abs(degrees) / 180;
+	const cos = Math.cos(rad);
+	const sin = Math.sin(rad) * (degrees < 0 ? -1 : 1);
+
+	return Array(cos, sin, 0, -sin, cos, 0, 0, 0, 1);
 }
 
 // Esta función retorna una matriz que resula de la composición de trasn1 y trans2. Ambas 
