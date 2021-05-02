@@ -40,7 +40,25 @@ const rotationM = degrees => {
 // primero trans1 y luego trans2.
 function ComposeTransforms( trans1, trans2 )
 {
-	return Array(1,0,0,0,1,0,0,0,1);
+//								 c1   c2   c3
+// r1 -> | A[0] A[3] A[6] |   | B[0] B[3] B[6] |
+// r2 -> | A[1] A[4] A[7] | * | B[1] B[4] B[7] |
+// r3 -> | A[2] A[5] A[8] |   | B[2] B[5] B[8] |
+// 
+	
+	const r1 = [trans1[0],trans1[3],trans1[6]];
+	const r2 = [trans1[1],trans1[4],trans1[7]];
+	const r3 = [trans1[2],trans1[5],trans1[8]];
+
+	const c1 = trans2.slice(0,3);
+	const c2 = trans2.slice(3,6);
+	const c3 = trans2.slice(6,9);
+
+
+	return Array(dotProd(r1,c1),dotProd(r2,c1),dotProd(r3,c1),
+				 dotProd(r1,c2),dotProd(r2,c2),dotProd(r3,c2),
+				 dotProd(r1,c3),dotProd(r2,c3),dotProd(r3,c3));
 }
 
+const dotProd = (a,b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]  ;
 
