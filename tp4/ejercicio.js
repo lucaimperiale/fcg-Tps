@@ -111,7 +111,7 @@ class MeshDrawer
   setMesh( vertPos, texCoords )
   {
     // [COMPLETAR] Actualizar el contenido del buffer de vértices
-    this.numTriangles = vertPos.length / 3;
+    this.numTriangles = vertPos.length / 3 / 3;
 
     gl.useProgram(this.prog);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
@@ -147,7 +147,7 @@ class MeshDrawer
 		gl.enableVertexAttribArray(this.pos);
 
     // Dibujamos
-    gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles);
+    gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles*3);
   }
 
   // Esta función se llama para setear una textura sobre la malla
