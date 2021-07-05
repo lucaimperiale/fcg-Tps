@@ -94,12 +94,19 @@ class MeshDrawer
     // 2. Obtenemos los IDs de las variables uniformes en los shaders
     this.mvp = gl.getUniformLocation(this.prog, 'mvp');
     this.swapAxes = gl.getUniformLocation(this.prog, 'swapYZ');
+    this.showT = gl.getUniformLocation(this.prog, 'showT');
+    this.sampler = gl.getUniformLocation(this.prog, 'texGPU' );
+
 
     // 3. Obtenemos los IDs de los atributos de los vértices en los shaders
     this.pos = gl.getAttribLocation(this.prog, 'pos');
+    this.textCoord = gl.getAttribLocation(this.prog, 'aTexCoord');
 
     // 4. Creamos la textura y el buffer para almacenar los vértices
     this.buffer = gl.createBuffer();
+    this.coordBuffer = gl.createBuffer();
+    this.textura = gl.createTexture();    
+
   }
 
   // Esta función se llama cada vez que el usuario carga un nuevo archivo OBJ.
@@ -116,6 +123,9 @@ class MeshDrawer
     gl.useProgram(this.prog);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertPos), gl.STATIC_DRAW);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.coordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texCoords), gl.STATIC_DRAW);
   }
 
   // Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Intercambiar Y-Z'
@@ -140,11 +150,19 @@ class MeshDrawer
     gl.uniformMatrix4fv(this.mvp, false, trans);
 
     // 3. Binding de los buffers
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-
     // 4. Habilitamos los atributos de los vértices
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    gl.enableVertexAttribArray(this.pos);
 		gl.vertexAttribPointer(this.pos, 3, gl.FLOAT, false, 0, 0);
-		gl.enableVertexAttribArray(this.pos);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.coordBuffer);
+    gl.enableVertexAttribArray(this.textCoord);
+    gl.vertexAttribPointer(this.textCoord, 2, gl.FLOAT, false, 0, 0);
+
+    // Asocio la unidad de textura 0
+
+    gl.uniform1i (this.sampler, 0 );
 
     // Dibujamos
     gl.drawArrays(gl.TRIANGLES, 0, this.numTriangles*3);
@@ -155,6 +173,23 @@ class MeshDrawer
   setTexture( img )
   {
     // [COMPLETAR] Binding de la textura
+
+    // Creo la textura en a partir de la imagen
+
+    gl.bindTexture( gl.TEXTURE_2D, this.textura);
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap( gl.TEXTURE_2D );
+
+    // La cargo en la texture unit 0
+
+    gl.activeTexture( gl.TEXTURE0 );
+    gl.bindTexture( gl.TEXTURE_2D, this.textura);
+
+    // Actualizo la variable para que ya la imagen tenga textura
+
+    gl.useProgram(this.prog);
+    gl.uniform1i(this.showT,1);  
+
   }
 
   // Esta función se llama cada vez que el usuario cambia el estado del checkbox 'Mostrar textura'
@@ -162,6 +197,8 @@ class MeshDrawer
   showTexture( show )
   {
     // [COMPLETAR] Setear variables uniformes en el fragment shader
+    gl.useProgram(this.prog);
+    gl.uniform1i(this.showT, show ? 1 : 0);
   }
 }
 
@@ -170,8 +207,12 @@ class MeshDrawer
 // Las constantes en punto flotante necesitan ser expresadas como x.y, incluso si son enteros: ejemplo, para 4 escribimos 4.0
 var meshVS = `
   attribute vec3 pos;
+  attribute vec2 aTexCoord;
+
   uniform int swapYZ;
   uniform mat4 mvp;
+
+  varying vec2 texCoord;
 
   void main()
   {
@@ -180,16 +221,25 @@ var meshVS = `
     } else {
       gl_Position = mvp * vec4(pos, 1);
     }
+    texCoord = aTexCoord;
   }
 `;
 
 // Fragment Shader
 var meshFS = `
   precision mediump float;
+
   uniform sampler2D texGPU;
+  uniform int showT;
+
+  varying vec2 texCoord;
 
   void main()
   {
-    gl_FragColor = vec4(1, 0, gl_FragCoord.z*gl_FragCoord.z, 1);
+    if (showT == 1){
+      gl_FragColor = texture2D(texGPU,texCoord);
+    } else {
+      gl_FragColor = vec4(1, 0, gl_FragCoord.z*gl_FragCoord.z, 1);
+    }
   }
 `;
