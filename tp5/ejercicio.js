@@ -54,26 +54,51 @@
 //
 // <=====================================================================================================>
 
-// Esta función recibe la matriz de proyección (ya calculada), una
-// traslación y dos ángulos de rotación (en radianes). Cada una de
-// las rotaciones se aplican sobre el eje x e y, respectivamente.
+// Esta función recibe una traslación y dos ángulos de rotación (en radianes).
+// Cada una de las rotaciones se aplican sobre el eje x e y, respectivamente.
 // La función debe retornar la combinación de las transformaciones
-// 3D (rotación, traslación y proyección) en una matriz de 4x4,
+// 3D (rotación y traslación) en una matriz de 4x4,
 // representada por un arreglo en formato column-major.
 function GetModelViewMatrix( translationX, translationY, translationZ, rotationX, rotationY )
 {
   // [COMPLETAR] Modificar el código para formar la matriz de transformación.
 
+  const xRotationMatrix = xRotationM(rotationX);
+  const yRotationMatrix = yRotationM(rotationY);
+
   // Matriz de traslación
-  var trans = [
+  const trans = [
     1, 0, 0, 0,
     0, 1, 0, 0,
     0, 0, 1, 0,
     translationX, translationY, translationZ, 1
   ];
 
-  var mv = trans;
-  return mv;
+  return MatrixMult(trans, MatrixMult(xRotationMatrix, yRotationMatrix));
+}
+
+function xRotationM(theta) {
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+
+  return [
+    1, 0, 0, 0,
+    0, cos, sin, 0,
+    0, -sin, cos, 0,
+    0, 0, 0, 1
+  ];
+}
+
+function yRotationM(theta) {
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+
+  return [
+    cos, 0, -sin, 0,
+    0, 1, 0, 0,
+    sin, 0, cos, 0,
+    0, 0, 0, 1
+  ];
 }
 
 // [COMPLETAR] Completar la implementación de esta clase.
