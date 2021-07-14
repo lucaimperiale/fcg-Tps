@@ -120,6 +120,9 @@ class MeshDrawer
     this.showT = gl.getUniformLocation(this.prog, 'showT');
     this.sampler = gl.getUniformLocation(this.prog, 'texGPU' );
 
+    this.shininess = gl.getUniformLocation(this.prog, 'shininess');
+    this.lightDir = gl.getUniformLocation(this.prog, 'lightDir');
+
     // 3. Obtenemos los IDs de los atributos de los vértices en los shaders
     this.pos = gl.getAttribLocation(this.prog, 'pos');
     this.textCoord = gl.getAttribLocation(this.prog, 'aTexCoord');
@@ -241,12 +244,16 @@ class MeshDrawer
   setLightDir( x, y, z )
   {
     // [COMPLETAR] Setear variables uniformes en el fragment shader para especificar la dirección de la luz
+    gl.useProgram(this.prog);
+    gl.uniform3fv(this.lightDir, new Float32Array([x, y, z]));
   }
 
   // Este método se llama al actualizar el brillo del material
   setShininess( shininess )
   {
     // [COMPLETAR] Setear variables uniformes en el fragment shader para especificar el brillo.
+    gl.useProgram(this.prog);
+    gl.uniform1f(this.shininess, shininess);
   }
 }
 
@@ -294,6 +301,9 @@ var meshFS = `
   uniform mat3 mn;
   uniform int showT;
   uniform sampler2D texGPU;
+
+  uniform vec3 lightDir;
+  uniform float shininess;
 
   varying vec2 texCoord;
   varying vec3 normCoord;
