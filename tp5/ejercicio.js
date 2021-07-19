@@ -287,6 +287,8 @@ var meshVS = `
       gl_Position = mvp * vec4(pos, 1);
     }
     texCoord = aTexCoord;
+    normCoord = aNormCoord;
+    vertCoord = mv * vec4(pos,1);
   }
 `;
 
@@ -311,10 +313,41 @@ var meshFS = `
 
   void main()
   {
+    vec4 color;
+
+    //Chequeo si usar la textura o no
+    
     if (showT == 1) {
-      gl_FragColor = texture2D(texGPU, texCoord);
+      color = texture2D(texGPU, texCoord);
     } else {
-      gl_FragColor = vec4(1, 0, gl_FragCoord.z*gl_FragCoord.z, 1);
+      color = vec4(1, 1, 1, 1);
     }
+
+    //Coeficientes necesarios
+
+    vec3 n = normalize(mn * normCoord);
+
+    vec3 v = normalize(-vertCoord.xyz);
+
+    vec3 h = normalize(lightDir + v);
+    
+    float cos_theta = dot(n,lightDir);
+
+    float cos_omega = dot(n,h);
+
+
+
+    //Calculo componentes por separado y luego las sumo
+
+    vec4 k_d = color;
+
+    vec4 diffuse = k_d * max(0.0,cos_theta);
+    
+    vec4 specular = vec4(1, 1, 1, 1) * pow(max(0.0,cos_omega), shininess);
+    
+    vec4 ambient = 0.05 * color;
+
+    gl_FragColor = vec4(1,1,1,1) * (diffuse + specular) + ambient;
+
   }
 `;
