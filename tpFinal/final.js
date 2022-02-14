@@ -255,10 +255,10 @@ function addAtmosphere(peak,facets){
     atmosphere.geometry.dispose();
     scene.remove( atmosphere );
   }
+
   if (!settings.atmosphere.enable){
     return;
   }
-
   var geometry;
   facets = Math.floor(facets /4)
 
@@ -274,14 +274,6 @@ function addAtmosphere(peak,facets){
   const positionAttribute = geometry.getAttribute( 'position' );
   var vertex = new THREE.Vector3();
   var sphere_vertex = new THREE.Spherical();
-
-  // for ( let i = 0; i < positionAttribute.count; i ++ ) {
-  //   vertex.fromBufferAttribute( positionAttribute, i ); // read vertex
-
-  //   vertex.multiplyScalar(1+Math.random()*0.03);
-
-  //   positionAttribute.setXYZ( i, vertex.x, vertex.y, vertex.z ); // write coordinates back
-  // }
 
   const generator = new noise.Noise(settings.atmosphere.noise,settings.planet.size);
   
