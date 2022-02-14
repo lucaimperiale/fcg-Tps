@@ -1,40 +1,45 @@
 import 'https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js';
-import perlin from './perlin-noise.js';
+import {perlinNoise3d} from './perlin-noise.js';
 
 export const noise = (function() {
 
   class _PerlinWrapper {
-    constructor() {
+    constructor(seed,size) {
+      this.noise = new perlinNoise3d();
+      this.noise.noiseSeed(seed);
+      this.size = size;
     }
     noise1D(x){
-      return perlin(x) * 2.0 - 1.0;
+      return this.noise.get(x) * 2.0 - 1.0;
     }
 
     noise2D(x, y){
-      return perlin(x, y) * 2.0 - 1.0;
+      return this.noise.get(x, y) * 2.0 - 1.0;
     }
 
     noise3D(x, y ,z) {
-      return perlin(x, y, z) * 2.0 - 1.0;
+      //all positive values
+      x += this.size;
+      y += this.size;
+      z += this.size;
+      return this.noise.get(x, y, z) * 2.0 - 1.0;
     }
   }
 
   class _NoiseGenerator {
-    constructor(params) {
+    constructor(params,size) {
       this._params = params;
+      this._size = size;
       this._Init();
     }
 
     _Init() {
-      this._noise = {
-        simplex: new SimplexNoise(this._params.seed),
-        perlin: new _PerlinWrapper(),
-      };
-    }
+      this.perlin = new _PerlinWrapper(this._params.seed,this._size);
+       }
 
     Get1(x){
       const xs = x / this._params.scale;
-      const noiseFunc = this._noise[this._params.noiseType];
+      const noiseFunc = this.perlin;
       const G = 2.0 ** (-this._params.persistence);
       let amplitude = 1.0;
       let frequency = 1.0;
@@ -56,7 +61,7 @@ export const noise = (function() {
     Get2(x, y) {
       const xs = x / this._params.scale;
       const ys = y / this._params.scale;
-      const noiseFunc = this._noise[this._params.noiseType];
+      const noiseFunc = this.perlin;
       const G = 2.0 ** (-this._params.persistence);
       let amplitude = 1.0;
       let frequency = 1.0;
@@ -81,7 +86,7 @@ export const noise = (function() {
       const xs = x / this._params.scale;
       const ys = y / this._params.scale;
       const zs = z / this._params.scale;
-      const noiseFunc = this._noise[this._params.noiseType];
+      const noiseFunc = this.perlin;
 
       let amplitude = 1.0;
       let frequency = 1.0;

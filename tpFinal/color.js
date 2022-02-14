@@ -19,24 +19,10 @@ export const color = (function() {
 
     const _RED = new THREE.Color(0xFF0000);
 
-    let paramsNorth = {
-        octaves: 20,
-        persistence: 0.5,
-        lacunarity: 1.5,
-        exponentiation: 3.5,
-        height: 250.0,
-        scale: 100.0,
-        noiseType: 'perlin',
-        seed: 434
-      };
-      
-    let paramsSouth = paramsNorth;
-    paramsSouth.seed *=11;
-    paramsSouth.seed /=17;
-    
-  
+   
+ 
     class _ColorGenerator {
-      constructor() {
+      constructor(params,generator) {
         const _colourLerp = (t, p0, p1) => {
           const c = p0.clone();    
           return c.lerp(p1, t);
@@ -60,21 +46,22 @@ export const color = (function() {
         this._polesSpline.AddPoint(120, _POLEEDGE);
         this._polesSpline.AddPoint(165, _SNOW);
 
-        this._NorthGen = new noise.Noise(paramsNorth);
-        this._SouthGen = new noise.Noise(paramsSouth);
+        this._polesEnabled = params.poles.enable;
+        this._Gen = generator;
 
       }
 
       _poles(p,e){
 
-        const core = 10;
+        const core = 3;
+        const max = 30;
 
         if (p<core || p>180-core){
             return true;
         }
 
-        const n = this._NorthGen.Get2(e,5);
-        const s = this._SouthGen.Get2(e,5);
+        const n = this._Gen.Get(e);
+        const s = this._Gen.Get(n * 11 / 7);
 
         if (p < n || p > (180 - s) ){
             return true;
@@ -88,7 +75,7 @@ export const color = (function() {
         let p = THREE.MathUtils.radToDeg(phi);
         let e = THREE.MathUtils.radToDeg(theta);
 
-        if (this._poles(p,e)){
+        if (this._polesEnabled && this._poles(p,e)){
             return this._polesSpline.Get(p);
         }
 
