@@ -1,4 +1,3 @@
-import 'https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.js';
 import {perlinNoise3d} from './perlin-noise.js';
 
 export const noise = (function() {
