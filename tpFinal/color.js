@@ -1,9 +1,5 @@
-import { noise } from './noise.js';
 import {spline} from './spline.js';
-import * as THREE from './three.js-master/build/three.module.js';
-
-
-
+import * as THREE from './three/three.module.js';
 
 export const color = (function() {
 
@@ -18,8 +14,6 @@ export const color = (function() {
     const _POLEEDGE = new THREE.Color(0xAFFFFE);
 
     const _RED = new THREE.Color(0xFF0000);
-
-   
  
     class _ColorGenerator {
       constructor(params,generator) {
@@ -52,9 +46,7 @@ export const color = (function() {
       }
 
       _poles(p,e){
-
         const core = 3;
-        const max = 30;
 
         if (p<core || p>180-core){
             return true;

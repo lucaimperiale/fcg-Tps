@@ -2,9 +2,9 @@ var ww = window.innerWidth,
     wh = window.innerHeight;
 var camera, scene, renderer;
 
-import * as THREE from './three.js-master/build/three.module.js';
-import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
-import {GUI} from './three.js-master/examples/jsm/libs/dat.gui.module.js';
+import * as THREE from './three/three.module.js';
+import { OrbitControls } from './three/OrbitControls.js';
+import {GUI} from './three/dat.gui.module.js';
 import {noise} from './noise.js'
 import {color} from './color.js'
 
@@ -14,6 +14,8 @@ var settings;
 
 var planet, clouds, atmosphere;
 var textureCube;
+
+var sun, amblight;
 
 init();
 animate();
@@ -49,7 +51,7 @@ function createGUI(){
   const polesFolder = gui.addFolder('Poles')
   const atmosphereFolder = gui.addFolder('Atmosphere')
   // const cloudsFolder = gui.addFolder('Clouds')
-  const backgroundFolder = gui.addFolder('Background') 
+  const backgroundFolder = gui.addFolder('Background (Slow)') 
 
   settings = {
     planet : {
@@ -71,7 +73,7 @@ function createGUI(){
       enable: true,
       noise: {
         octaves: 8,
-        persistence: 0.5,
+        persistence: 0.7,
         lacunarity: 3,
         exponentiation: 2.7,
         height: 250.0,
@@ -95,7 +97,7 @@ function createGUI(){
       enable: true,
     },
     background:{
-      enable: true,
+      enable: false,
     },
     Rebuild: function(){
       draw();
@@ -155,19 +157,19 @@ function loadTexture(){
 
 function addLights(){
 
-  var shadowLight =  new THREE.PointLight( 0xFFEFC9, 2, 10 );
-  shadowLight.shadow.camera.near = 0.5;
-  shadowLight.shadow.camera.far = 2000;
-  shadowLight.position.set(500, 0, 500);
-  shadowLight.castShadow = true;
-  shadowLight.shadow.darkness = 0.0;
-  shadowLight.shadow.mapSize.width = 2048;
-  shadowLight.shadow.mapSize.height = 2048;
+  sun =  new THREE.PointLight( 0xFFE9D4, 1.5);
+  // sun.shadow.camera.near = 0.5;
+  // sun.shadow.camera.far = 2000;
+  sun.position.set(1000, 0, 1000);
+  // sun.castShadow = true;
+  // sun.shadow.darkness = 0.0;
+  // sun.shadow.mapSize.width = 2048;
+  // sun.shadow.mapSize.height = 2048;
 
-  const amblight = new THREE.AmbientLight( 0x404040 ,4)
+  amblight = new THREE.AmbientLight( 0x404040,2)
 
   scene.add(amblight)
-  scene.add(shadowLight);
+  scene.add(sun);
 }
 
 function addPlanet(size,facets){
@@ -178,7 +180,6 @@ function addPlanet(size,facets){
   }
 
   var geometry;
-
   if (settings.planet.geometry == 'Icosahedron'){
     geometry = new THREE.IcosahedronGeometry( size, facets );
   }else if((settings.planet.geometry == 'Sphere')){
@@ -187,23 +188,19 @@ function addPlanet(size,facets){
     geometry = new THREE.OctahedronGeometry( size, facets );
   }
 
+  //Itero por los vertices y agrego a la coordinada de radio un ruido
   const positionAttribute = geometry.getAttribute( 'position' );
-
   var vertex = new THREE.Vector3();
   var sphere_vertex = new THREE.Spherical();
   var max_peak = 0;
 
-
   const generator = new noise.Noise(settings.planet.noise,settings.planet.size);
-  
   for ( let i = 0; i < positionAttribute.count; i ++ ) {
 
-    vertex.fromBufferAttribute( positionAttribute, i ); // read vertex
-
+    vertex.fromBufferAttribute( positionAttribute, i );
     sphere_vertex.setFromVector3(vertex);
-
+    
     let noise = generator.Get(vertex.x,vertex.y,vertex.z);
-
     sphere_vertex.radius += noise ;
     vertex.setFromSpherical(sphere_vertex);
 
@@ -211,17 +208,15 @@ function addPlanet(size,facets){
       max_peak = sphere_vertex.radius;
     }
 
-    positionAttribute.setXYZ( i, vertex.x, vertex.y, vertex.z ); // write coordinates back
+    positionAttribute.setXYZ( i, vertex.x, vertex.y, vertex.z );
   }
 
+
+  //Itero de nuevo, pero ahora para pintar cada vertice con la altura correspondiente, segun la altura
   geometry.setAttribute( 'color', new THREE.BufferAttribute( new Float32Array( positionAttribute.count * 3 ), 3 ) );
-
   const threeColor = new THREE.Color();
-
   const colorAttribute = geometry.getAttribute( 'color' );
-
   const diff = max_peak - size;
-
   const colorNoise = new noise.Noise(settings.poles.noise,0);
   const colorGenerator = new color.Color(settings,colorNoise);
 
@@ -233,9 +228,9 @@ function addPlanet(size,facets){
     const rgb = colorGenerator.get((sphere_vertex.radius - size) / diff, sphere_vertex.phi, sphere_vertex.theta);
 
     threeColor.setRGB(rgb.r,rgb.g,rgb.b);
-
     colorAttribute.setXYZ(i,threeColor.r,threeColor.g,threeColor.b);
   }
+
 
   const material = new THREE.MeshStandardMaterial( {
 					vertexColors: true,
@@ -251,7 +246,6 @@ function addPlanet(size,facets){
 
 function addAtmosphere(peak,facets){
   if ( atmosphere !== undefined ) {
-
     atmosphere.geometry.dispose();
     scene.remove( atmosphere );
   }
@@ -270,30 +264,26 @@ function addAtmosphere(peak,facets){
     geometry = new THREE.OctahedronGeometry( peak * 1.3, facets );
   }
 
-
+  // Itero por los vertices para generar un minimo ruido en la atmosfera
   const positionAttribute = geometry.getAttribute( 'position' );
   var vertex = new THREE.Vector3();
   var sphere_vertex = new THREE.Spherical();
-
   const generator = new noise.Noise(settings.atmosphere.noise,settings.planet.size);
   
   for ( let i = 0; i < positionAttribute.count; i ++ ) {
 
-    vertex.fromBufferAttribute( positionAttribute, i ); // read vertex
-
+    vertex.fromBufferAttribute( positionAttribute, i ); 
     sphere_vertex.setFromVector3(vertex);   
-    
     let noise = generator.Get(vertex.x,vertex.y,vertex.z);
-
     sphere_vertex.radius += noise ;
     vertex.setFromSpherical(sphere_vertex);
 
-    positionAttribute.setXYZ( i, vertex.x, vertex.y, vertex.z ); // write coordinates back
+    positionAttribute.setXYZ( i, vertex.x, vertex.y, vertex.z );
   }
   
-  var material = new THREE.MeshPhongMaterial({color: 0x4ca6ff,
+  var material = new THREE.MeshStandardMaterial({color: 0x4ca6ff,
                                               transparent: true,
-                                              opacity: 0.05,
+                                              opacity: 0.1,
                                              });
   atmosphere = new THREE.Mesh( geometry, material );
   scene.add( atmosphere );
@@ -307,11 +297,18 @@ function onWindowResize() {
 
 function animate() {
   requestAnimationFrame( animate );
+
+  sunRotation();
  
   renderer.render( scene, camera );
 }
 
-//Unused code
+function sunRotation(){
+  let alpha = THREE.MathUtils.degToRad(0.08);
+  sun.position.set(sun.position.x * Math.cos(alpha) - sun.position.z * Math.sin(alpha), 0, sun.position.z * Math.cos(alpha) + sun.position.x * Math.sin(alpha))
+}
+
+// Unused code
 
 function addClouds(peak){
   if ( clouds !== undefined ) {
