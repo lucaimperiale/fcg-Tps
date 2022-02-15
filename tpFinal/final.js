@@ -29,7 +29,7 @@ function init() {
   document.body.appendChild(renderer.domElement);
   
   //camera
-  camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+  camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 3000 );
   camera.position.set( 400, 300, 300 );
   camera.lookAt(new THREE.Vector3(0,0,0));
   
@@ -157,14 +157,8 @@ function loadTexture(){
 
 function addLights(){
 
-  sun =  new THREE.PointLight( 0xFFE9D4, 1.5);
-  // sun.shadow.camera.near = 0.5;
-  // sun.shadow.camera.far = 2000;
-  sun.position.set(1000, 0, 1000);
-  // sun.castShadow = true;
-  // sun.shadow.darkness = 0.0;
-  // sun.shadow.mapSize.width = 2048;
-  // sun.shadow.mapSize.height = 2048;
+  sun =  new THREE.PointLight( 0xFFE9D4, 0.85);
+  sun.position.set(1000, 0, -1000);
 
   amblight = new THREE.AmbientLight( 0x404040,2)
 
