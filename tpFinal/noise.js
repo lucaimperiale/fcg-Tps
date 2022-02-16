@@ -35,7 +35,8 @@ export const noise = (function() {
     _Init() {
       this.perlin = new _PerlinWrapper(this._params.seed,this._size);
        }
-
+      
+    //Compute F
     Get1(x){
       const xs = x / this._params.scale;
       const noiseFunc = this.perlin;

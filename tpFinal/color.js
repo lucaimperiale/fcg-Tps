@@ -7,11 +7,15 @@ export const color = (function() {
     const _SHALLOW_OCEAN = new THREE.Color(0x5065FF);
 
     const _BEACH = new THREE.Color(0xd9d592);
-    const _PLAINS = new THREE.Color(0x9EE566);
     const _JUNGLE = new THREE.Color(0x10550D);
+    const _PLAINS = new THREE.Color(0x9EE566);
     const _MOUNTAIN = new THREE.Color(0xB5B5B5);
     const _SNOW = new THREE.Color(0xFFFFFF);
+
     const _POLEEDGE = new THREE.Color(0xAFFFFE);
+    const _POLEFOREST = new THREE.Color(0xDAFFD8);
+    const _POLEPLAIN = new THREE.Color(0xD9FFFF);
+    const _POLEMOUNTAIN = new THREE.Color(0xD8D4D4);
 
     const _RED = new THREE.Color(0xFF0000);
  
@@ -23,7 +27,6 @@ export const color = (function() {
         };
 
         this._colourSpline = new spline.LinearSpline(_colourLerp)
-
         this._colourSpline.AddPoint(0.35, _BEACH);
         this._colourSpline.AddPoint(0.4, _JUNGLE);
         this._colourSpline.AddPoint(0.6, _PLAINS);
@@ -35,11 +38,11 @@ export const color = (function() {
         this._oceanSpline.AddPoint(0.3, _SHALLOW_OCEAN);
 
         this._polesSpline = new spline.LinearSpline(_colourLerp);
-        this._polesSpline.AddPoint(15, _SNOW);
-        this._polesSpline.AddPoint(60, _POLEEDGE);
-        this._polesSpline.AddPoint(120, _POLEEDGE);
-        this._polesSpline.AddPoint(165, _SNOW);
-
+        this._polesSpline.AddPoint(0, _POLEEDGE);
+        this._polesSpline.AddPoint(0.35, _SNOW);
+        this._polesSpline.AddPoint(0.8, _POLEMOUNTAIN);
+        this._polesSpline.AddPoint(0.9, _SNOW);
+    
         this._polesEnabled = params.poles.enable;
         this._Gen = generator;
 
@@ -68,7 +71,7 @@ export const color = (function() {
         let e = THREE.MathUtils.radToDeg(theta);
 
         if (this._polesEnabled && this._poles(p,e)){
-            return this._polesSpline.Get(p);
+            return this._polesSpline.Get(h);
         }
 
         if (h < 0.3) {
